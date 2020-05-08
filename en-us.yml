@@ -1,0 +1,45 @@
+language: language
+updatelist_off: Failed to update the list!
+updatelist: Update list succeeded!
+Plugin: Plugin Library
+cickinfo: Click to view information
+cickopen: Click to open
+installp: Plugin name to install
+author: Plugin author
+downloadurl: Download address
+downloadlib: Libraries to download
+pylib: Python installed Libraries
+install: install
+notplugin: This plugin was not found!
+autoload: Automatically reloaded
+apiname: API name
+apiauthor: API author
+remove: Are you sure to delete this plugin?
+removeyes: Delete succeeded
+removeno: Delete failed
+libno: 'no'
+remarks: remarks
+saveyes: Saved successfully!
+saveno: Setting failed!
+argserror: Parameter error!
+preno: No permission!
+cicklist: Click to view the list of plugins
+listp: List plugins
+cickrun: Click input
+instp: Install plugins
+cickupdate: Click Update plugin list
+uplist: Update list
+updateplugin: Update plugin
+rmplugin: Remove plugins
+pluginconfig: Plugin configuration
+downsource: Download source
+jindutiao: progress bar
+pipcommand: PIP command
+cickconfighelp: Click to view configuration help
+installlib: Installing Library
+installpylib: Installing Python Library
+listupdatetime: List update time
+updatelang: Update language file
+updateload: Downloading {0}
+findplugin: Search plugin
+findnow: A total of {0} plugins were found
