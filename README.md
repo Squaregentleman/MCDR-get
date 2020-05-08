@@ -6,7 +6,7 @@
 
 如果要提交插件请去 [这里](https://www.blackserver.cn/) 生成json然后pr
 
-## A plug-in for downloading plugins
+## A plugin for downloading plugins
 
 Just download mcdr-get.py
 
