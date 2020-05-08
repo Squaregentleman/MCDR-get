@@ -16,7 +16,7 @@ from utils import constant
 
 Prefix = '!!mget'
 PluginName = 'MGet'
-debug = True
+debug = False
 
 
 sysb = platform.system()
@@ -659,7 +659,7 @@ def send_player(server, info, m1):
 
 def init(server, info):
     args = info.content.split(' ')
-    print(args)
+    global config
     if args[1] == 'init' and len(args) == 2:
         say(server, '[§b' + PluginName + '§r] §6设置语言 / Set language', info, True)
         m1 = get_text('[中文]', '中文', Prefix +
@@ -719,12 +719,13 @@ def init(server, info):
                     say(server, '[§b' + PluginName + '§r] §6保存成功 / Save failed', info, True)
                 else:
                     say(server, '[§b' + PluginName + '§r] §6保存失败 / Save failed', info, True)
+                    return
                 say(server, '[§b' + PluginName + '§r] §6正在保存配置文件 / Saving profile', info, True)
                 if save_config():
                     say(server, '[§b' + PluginName + '§r] §6保存成功 / Saved successfully', info, True)
                 else:
                     say(server, '[§b' + PluginName + '§r] §6保存失败 / Save failed', info, True)
-                say(server, '[§b' + PluginName + '§r] §6下载语言文件 / Download language file', info, True)
+                    return
 
 
 def download(link, server, info, filename=None):
