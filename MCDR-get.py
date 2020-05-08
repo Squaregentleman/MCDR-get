@@ -24,13 +24,13 @@ if sysb != 'windows':
     ppath = os.path.join('plugins/')
     cconfig = os.path.join('plugins', 'config/')
     configpath = os.path.join('plugins', 'config', 'mget.json')
-    listpath = os.path.join('plugins', 'config', 'list.json')
+    listpath = os.path.join('plugins', 'mget', 'list.json')
     mconfig = os.path.join('plugins', 'mget/')
 else:
     ppath = os.path.join('plugins\\')
     cconfig = os.path.join('plugins', 'config\\')
     configpath = os.path.join('plugins', 'config', 'mget.json')
-    listpath = os.path.join('plugins', 'config', 'list.json')
+    listpath = os.path.join('plugins', 'mget', 'list.json')
     mconfig = os.path.join('plugins', 'mget\\')
 
 ver = constant.VERSION.split('-')[0]
