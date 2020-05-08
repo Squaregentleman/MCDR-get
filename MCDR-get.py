@@ -199,7 +199,7 @@ def get_list():
         return str(urlopen(res).read(), 'utf-8')
     else:
         res = urllib.request.Request(
-            url='https://gitee.com/fkj2005/MCDR-Get/raw/master/list.json', headers=headers)
+            url='https://gitee.com/fkj2005/MCDR-get/raw/master/list.json', headers=headers)
         return str(urlopen(res).read(), 'utf-8')
 
 
@@ -215,9 +215,9 @@ def get_lang():
         return str(urlopen(res).read(), 'utf-8')
     else:
         if config['language'] == 'zh-cn':
-            res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-Get/raw/master/zh-cn.yml', headers=headers)
+            res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-get/raw/master/zh-cn.yml', headers=headers)
         else:
-            res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-Get/raw/master/en-us.yml', headers=headers)
+            res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-get/raw/master/en-us.yml', headers=headers)
         return str(urlopen(res).read(), 'utf-8')
 
 
