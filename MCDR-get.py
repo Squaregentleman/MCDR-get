@@ -195,7 +195,7 @@ def get_list():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     if config['source'] == 1:
-        res = urllib.request.Request(url='url', headers=headers)
+        res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/list.json', headers=headers)
         return str(urlopen(res).read(), 'utf-8')
     else:
         res = urllib.request.Request(
@@ -208,7 +208,10 @@ def get_lang():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     if config['source'] == 1:
-        res = urllib.request.Request(url='url', headers=headers)
+        if config['language'] == 'zh-cn':
+            res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/zh-cn.yml', headers=headers)
+        else:
+            res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/en-us.yml', headers=headers)
         return str(urlopen(res).read(), 'utf-8')
     else:
         if config['language'] == 'zh-cn':
