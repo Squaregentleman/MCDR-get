@@ -570,6 +570,13 @@
       "raw_url": "https://github.com/Da-Dog/ServerOccupancyAPI/raw/master/ServerOccupancyAPI.py",
       "file": "ServerOccupancyAPI.py",
       "author": "Da_Dog"
-    }
+    },
+    {
+      "name": "Economy",
+      "raw_url_cn": "https://gitee.com/zhang_anzhi/Economy/raw/master/Economy.py",
+      "raw_url": "https://github.com/zhang-anzhi/Economy/raw/master/Economy.py",
+      "file": "Economy.py",
+      "author": "zhang-anzhi"
+    },
   ]
 }
