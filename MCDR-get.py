@@ -39,8 +39,6 @@ chunk_size = 8
 
 if ver >= 0.8:
     from utils.rtext import *
-else:
-    print('[' + PluginName + '] 不支持0.8.1以前的版本!')
 
 config = None
 lang = None
@@ -78,9 +76,6 @@ def get_open_url(text, mous, cickrun, color=RColor.white):
 def load_config():
     global config
     if debug:
-        # print(configpath)
-        # print(os.getcwd())
-        # print(open_file(configpath))
         config = json.loads(open_file(configpath))
         return True
     else:
@@ -96,21 +91,25 @@ def load_config():
             return False
 
 
-def load_lang():
+def load_lang(server=None):
     global lang
     global config
+    if config['language'] != '':
+        if not os.path.exists(mconfig + config['language'] + '.yml'):
+            if save_file(mconfig + config['language'] + '.yml', get_lang()):
+                say(server, '[§b' + PluginName + '§r] §6保存语言文件成功 / Save language file failed')
+            else:
+                say(server, '[§b' + PluginName + '§r] §6保存语言文件失败 / Save language file failed')
     if debug:
         lang = yaml.load(open_file(mconfig + config['language'] + '.yml'), Loader=yaml.FullLoader)
-        # print(lang)
         return lang
     else:
         try:
             lang = yaml.load(open_file(mconfig + config['language'] + '.yml'), Loader=yaml.FullLoader)
-            # print(lang)
             return lang
         except:
             print('load lang no')
-            return
+            return None
 
 
 def save_config():
@@ -154,9 +153,13 @@ def open_file(fill):
 def on_load(server, old):
     global sysb
     global config
+    if ver < 0.8:
+        server.logger.info('[' + PluginName + '] 不支持0.8.1以前的版本!')
+        say(server,'[' + PluginName + '] 不支持0.8.1以前的版本!')
+        return
     sysb = platform.system()
     load_config()
-    lang = load_lang()
+    lang = load_lang(server)
     if lang:
         server.add_help_message(Prefix, lang['Plugin'])
     else:
@@ -330,7 +333,6 @@ def on_info(server, info):
                     server.refresh_changed_plugins()
                 elif args[1] == 'getlib':
                     plugin_info = get_plugin_lib_info(args[2])
-                    print(plugin_info)
                     if config['language'] != 'zh-cn':
                         url = plugin_info['raw_url_cn']
                     else:
@@ -347,7 +349,13 @@ def on_info(server, info):
                         server.tell(info.player, '[§b' + PluginName + '§r] §4' + lang['notplugin'])
                         return
                     send_player(server, info, get_text('[§b' + PluginName + '§r] §6' + lang['autoload']))
-                    server.refresh_changed_plugins()
+                    if args[2] == 'MCDR-get':
+                        if not os.path.exists(mconfig + config['language'] + '.yml'):
+                            if save_file(mconfig + config['language'] + '.yml', get_lang()):
+                                say(server, '[§b' + PluginName + '§r] §6保存语言文件成功 / Save language file failed', info, True)
+                                server.refresh_changed_plugins()
+                            else:
+                                say(server, '[§b' + PluginName + '§r] §6保存语言文件失败 / Save language file failed', info, True)
                 elif args[1] == 'rm':
                     send_player(server, info, RTextList(
                         get_text('[§b' + PluginName + '§r] '), 
@@ -451,13 +459,25 @@ def on_info(server, info):
                                 config['language'] = args[3]
                                 save_config()
                                 load_config()
-                                load_lang()
+                                if not os.path.exists(mconfig + config['language'] + '.yml'):
+                                    if save_file(mconfig + config['language'] + '.yml', get_lang()):
+                                        say(server, '[§b' + PluginName + '§r] §6保存成功 / Save failed', info, True)
+                                    else:
+                                        say(server, '[§b' + PluginName + '§r] §6保存失败 / Save failed', info, True)
+                                lang = load_lang(server)
                                 send_player(server, info, get_text(
                                     '[§b' + PluginName + '§r] §6' + lang['saveyes']))
                             else:
                                 try:
                                     config['language'] = args[3]
                                     save_config()
+                                    load_config()
+                                    if not os.path.exists(mconfig + config['language'] + '.yml'):
+                                        if save_file(mconfig + config['language'] + '.yml', get_lang()):
+                                            say(server, '[§b' + PluginName + '§r] §6保存成功 / Save failed', info, True)
+                                        else:
+                                            say(server, '[§b' + PluginName + '§r] §6保存失败 / Save failed', info, True)
+                                    lang = load_lang(server)
                                     send_player(server, info, get_text(
                                         '[§b' + PluginName + '§r] §6' + lang['saveyes']))
                                 except:
@@ -568,9 +588,13 @@ def install(server, info):
                                 cconfig + 'MinecraftItemAPI.json'
                                 )
             if line['pip_lib']:
-                for line3 in line['pip_lib']:
-                    server.tell(info.player, '§6' + lang['installpylib'] + ': ' + line3)
-                    os.system(config['pip'] + ' install ' + line3)
+                inst_pip = ' '.join(line['pip_lib'])
+                server.tell(info.player, '§6' + lang['installpylib'] + ': ' + inst_pip) 
+                pipcode = os.system(config['pip'] + ' install ' + inst_pip)
+                if pipcode == 0:
+                    server.tell(info.player, '§6' + lang['pipinstallyes'])
+                else:
+                    server.tell(info.player, '§6' + lang['pipinstallerror'])
             return True
     return False
 
