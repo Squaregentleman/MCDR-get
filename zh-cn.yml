@@ -43,3 +43,4 @@ updatelang: 更新语言文件
 updateload: 正在下载 {0}
 findplugin: 搜索插件
 findnow: 共搜索到 {0} 个插件
+pipinstallerror: pip 安装失败,详细信息请看后台!
