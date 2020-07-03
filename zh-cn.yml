@@ -45,3 +45,5 @@ findplugin: 搜索插件
 findnow: 共搜索到 {0} 个插件
 pipinstallerror: pip 依赖库安装失败,详细信息请看后台!
 pipinstallyes: pip 依赖库安装成功!
+listall: 列出全部插件
+yuanurl: 原地址
