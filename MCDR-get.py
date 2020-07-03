@@ -225,10 +225,10 @@ def get_lang():
 def on_info(server, info):
     global config
     global lang
-    if not info.is_player:
-        server.logger.info('不支持控制台操作(懒) / Console operation not supported (lazy)')
-        return
     if info.content.startswith(Prefix):
+        if not info.is_player:
+            server.logger.info('不支持控制台操作(懒) / Console operation not supported (lazy)')
+            return
         if server.get_permission_level(info) >= 3:
             args = info.content.split(' ')
             if os.path.exists(configpath) == False:
