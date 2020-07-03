@@ -9,29 +9,23 @@ import time
 import requests
 import shutil
 import yaml
-from urllib.request import urlopen
-from urllib.parse import unquote
+import importlib
 from utils import constant
 
-
+v = 0.1
 Prefix = '!!mget'
 PluginName = 'MGet'
 debug = False
 
 
 sysb = platform.system()
-if sysb != 'windows':
-    ppath = os.path.join('plugins/')
-    cconfig = os.path.join('plugins', 'config/')
-    configpath = os.path.join('plugins', 'config', 'mget.json')
-    listpath = os.path.join('plugins', 'mget', 'list.json')
-    mconfig = os.path.join('plugins', 'mget/')
-else:
-    ppath = os.path.join('plugins\\')
-    cconfig = os.path.join('plugins', 'config\\')
-    configpath = os.path.join('plugins', 'config', 'mget.json')
-    listpath = os.path.join('plugins', 'mget', 'list.json')
-    mconfig = os.path.join('plugins', 'mget\\')
+ppath = os.path.join('plugins','')
+cconfig = os.path.join('plugins', 'config','')
+configpath = os.path.join('plugins', 'config', 'mget.json')
+listpath = os.path.join('plugins', 'mget', 'list.json')
+mconfig = os.path.join('plugins', 'mget','')
+tmp = os.path.join('plugins', 'mget', 'tmp','')
+
 
 ver = constant.VERSION.split('-')[0]
 ver = float('.'.join(ver.split('.')[0:2]))
@@ -84,10 +78,6 @@ def load_config():
             return True
         except:
             config = json.loads('{"language": "","source": 0,"boosbar": 0,"pip":""}')
-            if not os.path.exists(mconfig):
-                os.mkdir(mconfig)
-            if not os.path.exists(cconfig):
-                os.mkdir(cconfig)
             return False
 
 
@@ -153,6 +143,12 @@ def open_file(fill):
 def on_load(server, old):
     global sysb
     global config
+    if not os.path.exists(mconfig):
+        os.mkdir(mconfig)
+    if not os.path.exists(cconfig):
+        os.mkdir(cconfig)
+    if not os.path.exists(tmp):
+        os.mkdir(tmp)
     if ver < 0.8:
         server.logger.info('[' + PluginName + '] 不支持0.8.1以前的版本!')
         say(server,'[' + PluginName + '] 不支持0.8.1以前的版本!')
@@ -176,6 +172,8 @@ def printhelp(server, info):
         get_text('§7------------§bMCDR ' + PluginName + '§7------------\n      '),
         get_text(f'§7{Prefix} list', lang['cicklist'], f'{Prefix} list'),
         get_text(' §r' + lang['listp'] + '\n      '),
+        get_text(f'§7{Prefix} listall', lang['cicklist'], f'{Prefix} listall'),
+        get_text(' §r' + lang['listall'] + '\n      '),
         get_text(f'§7{Prefix} find <Plugin>', lang['cickrun'], f'{Prefix} find ',run=False),
         get_text(' §r' + lang['findplugin'] + '\n      '),
         get_text(f'§7{Prefix} install ', lang['cickrun'], f'{Prefix} install ',run=False),
@@ -199,11 +197,11 @@ def get_list():
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     if config['source'] == 1:
         res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/list.json', headers=headers)
-        return str(urlopen(res).read(), 'utf-8')
+        return str(urllib.request.urlopen(res).read(), 'utf-8')
     else:
         res = urllib.request.Request(
             url='https://gitee.com/fkj2005/MCDR-get/raw/master/list.json', headers=headers)
-        return str(urlopen(res).read(), 'utf-8')
+        return str(urllib.request.urlopen(res).read(), 'utf-8')
 
 
 def get_lang():
@@ -215,18 +213,21 @@ def get_lang():
             res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/zh-cn.yml', headers=headers)
         else:
             res = urllib.request.Request(url='https://raw.githubusercontent.com/Squaregentleman/MCDR-get/master/en-us.yml', headers=headers)
-        return str(urlopen(res).read(), 'utf-8')
+        return str(urllib.request.urlopen(res).read(), 'utf-8')
     else:
         if config['language'] == 'zh-cn':
             res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-get/raw/master/zh-cn.yml', headers=headers)
         else:
             res = urllib.request.Request(url='https://gitee.com/fkj2005/MCDR-get/raw/master/en-us.yml', headers=headers)
-        return str(urlopen(res).read(), 'utf-8')
+        return str(urllib.request.urlopen(res).read(), 'utf-8')
 
 
 def on_info(server, info):
     global config
     global lang
+    if not info.is_player:
+        server.logger.info('不支持控制台操作(懒) / Console operation not supported (lazy)')
+        return
     if info.content.startswith(Prefix):
         if server.get_permission_level(info) >= 3:
             args = info.content.split(' ')
@@ -241,6 +242,32 @@ def on_info(server, info):
                 printhelp(server, info)
             elif len(args) == 2:
                 if args[1] == 'list':
+                    if os.path.exists(listpath):
+                        if open_file(listpath) != '':
+                            list_fl_print(server, info)
+                        else:
+                            if debug:
+                                save_file(listpath, get_list())
+                                list_fl_print(server, info)
+                            else:
+                                try:
+                                    save_file(listpath, get_list())
+                                    list_fl_print(server, info)
+                                except:
+                                    say(server, '[§b' + PluginName + '§r] §6' + lang['updatelist_off'])
+                                    return
+                    else:
+                        if debug:
+                            save_file(listpath, get_list())
+                            list_fl_print(server, info)
+                        else:
+                            try:
+                                save_file(listpath, get_list())
+                                list_fl_print(server, info)
+                            except:
+                                say(server, '[§b' + PluginName + '§r] §6' + lang['updatelist_off'])
+                                return
+                elif args[1] == 'listall':
                     if os.path.exists(listpath):
                         if open_file(listpath) != '':
                             list_print(server, info)
@@ -296,12 +323,12 @@ def on_info(server, info):
                             if lib:
                                 lib = RTextList(
                                     get_text('§b,'),
-                                    get_text('§b' + line,lang['cickinfo'],'!!' + PluginName + ' getlib ' + line),
+                                    get_text('§b' + line,lang['cickinfo'],Prefix + ' getlib ' + line),
                                     lib
                                     )
                             else:
                                 lib = RTextList(
-                                    get_text('§b' + line,lang['cickinfo'],'!!' + PluginName + ' getlib ' + line)
+                                    get_text('§b' + line,lang['cickinfo'],Prefix + ' getlib ' + line)
                                 )
                     else:
                         lib = '§b' + lang['libno']
@@ -314,8 +341,10 @@ def on_info(server, info):
                         get_text('§7------------§bMCDR ' + PluginName + '§7------------'),
                         get_text('\n      §6' + lang['installp'] + ': §b' + args[2]),
                         get_text('\n      §6' + lang['author'] + ': §b' + plugin_info['author']),
-                        get_text('\n      §6' + lang['downloadurl'] + '(Github): ') if config['language'] == 'zh-cn' else get_text('\n      §6' + lang['downloadurl'] + '(Gitee): '),
+                        get_text('\n      §6' + lang['downloadurl'] + ': '),
                         url,
+                        get_text('\n      §6' + lang['yuanurl'] + ': '),
+                        get_open_url('§r[§b' + lang['cickopen'] + '§r]', plugin_info['url'], plugin_info['url']),
                         get_text('\n      §6' + lang['downloadlib'] + ': §b'),
                         lib,
                         get_text('\n      §6' + lang['pylib'] + ': §b' + pylib),
@@ -341,8 +370,10 @@ def on_info(server, info):
                         get_text('§7------------§bMCDR ' + PluginName + '§7------------'),
                         get_text('\n      §6' + lang['apiname'] + ': §b' + args[2]),
                         get_text('\n      §6' + lang['apiauthor'] + ': §b' + plugin_info['author']),
-                        get_text('\n      §6' + lang['downloadurl'] + '(Github): ') if config['language'] != 'zh-cn' else get_text('\n      §6下载地址(Gitee): '),
-                        get_open_url('§r[§b' + lang['cickopen'] + '§r]', url, url)
+                        get_text('\n      §6' + lang['downloadurl'] + ': '),
+                        get_open_url('§r[§b' + lang['cickopen'] + '§r]', url, url),
+                        get_text('\n      §6' + lang['yuanurl'] + ': '),
+                        get_open_url('§r[§b' + lang['cickopen'] + '§r]', plugin_info['url'], plugin_info['url'])
                     ))
                 elif args[1] == 'update':
                     if not install(server, info):
@@ -393,6 +424,8 @@ def on_info(server, info):
                                 get_text('[§b' + PluginName + '§r] '), 
                                 get_text(lang['removeno'], color=RColor.red)
                             ))
+                elif args[1] == 'class':
+                    class_list(server, info)
                 elif args[1] == 'getinfo':
                     plugin_info = get_plugin_info(args[2])
                     if plugin_info['lib']:
@@ -402,12 +435,12 @@ def on_info(server, info):
                             if lib:
                                 lib = RTextList(
                                     get_text('§b,'),
-                                    get_text('§b' + line,lang['cickinfo'],'!!' + PluginName + ' getlib ' + line),
+                                    get_text('§b' + line,lang['cickinfo'],Prefix + ' getlib ' + line),
                                     lib
                                     )
                             else:
                                 lib = RTextList(
-                                    get_text('§b' + line,lang['cickinfo'],'!!' + PluginName + ' getlib ' + line)
+                                    get_text('§b' + line,lang['cickinfo'],Prefix + ' getlib ' + line)
                                 )
                     else:
                         lib = '§b' + lang['libno']
@@ -426,8 +459,10 @@ def on_info(server, info):
                         get_text('\n      §6' + lang['author'] + ': §b' + plugin_info['author']),
                         get_text('\n      §6' + lang['remarks'] + ': '),
                         bz,
-                        get_text('\n      §6' + lang['downloadurl'] + '(Github): ') if config['language'] != 'zh-cn' else get_text('\n      §6下载地址(Gitee): '),
+                        get_text('\n      §6' + lang['downloadurl'] + ': ') if config['language'] != 'zh-cn' else get_text('\n      §6下载地址(Gitee): '),
                         url,
+                        get_text('\n      §6' + lang['yuanurl'] + ': '),
+                        get_open_url('§r[§b' + lang['cickopen'] + '§r]', plugin_info['url'], plugin_info['url']),
                         get_text('\n      §6' + lang['downloadlib'] + ': §b'),
                         lib,
                         get_text('\n      §6' + lang['pylib'] + ': §b' + pylib)
@@ -511,7 +546,8 @@ def on_info(server, info):
                         else:
                             send_player(server, info, get_text(
                                 '[§b' + PluginName + '§r] §6' + lang['argserror']))
-
+                elif args[1] == 'subclass':
+                    subclass_list_print(server, info)
         else:
             server.tell(info.player, '[§b' + PluginName + '§r] §4' + lang['preno'])
 
@@ -573,29 +609,45 @@ def install(server, info):
     js_jx = json.loads(js)
     for line in js_jx['list']:
         if args[2] == line['name']:
-            if config['language'] != 'zh-cn':
-                download(line['raw_url_cn'], server, info)
-            else:
-                download(line['raw_url'], server, info)
-            if line['lib']:
-                for line2 in js_jx['api_list']:
-                    if line2['name'] in line['lib']:
-                        server.tell(info.player, '§6' + lang['installlib'] + ': ' + line2['name'])
-                        download(line2['raw_url'], server, info)
-                        if line2['name'] == 'MinecraftItemAPI.json':
-                            shutil.copyfile(
-                                ppath + 'MinecraftItemAPI.json', 
-                                cconfig + 'MinecraftItemAPI.json'
-                                )
-            if line['pip_lib']:
-                inst_pip = ' '.join(line['pip_lib'])
-                server.tell(info.player, '§6' + lang['installpylib'] + ': ' + inst_pip) 
-                pipcode = os.system(config['pip'] + ' install ' + inst_pip)
-                if pipcode == 0:
-                    server.tell(info.player, '§6' + lang['pipinstallyes'])
+            if line['file'][:-3].lower() == 'setup':
+                name = str(int(time.time())) + line['file']
+                if config['language'] != 'zh-cn':
+                    download(line['raw_url_cn'], server, info, name, tmp)
                 else:
-                    server.tell(info.player, '§6' + lang['pipinstallerror'])
-            return True
+                    download(line['raw_url'], server, info, name, tmp)
+                mok = importlib.import_module('plugin.mget.tmp.' + name[:-3])
+                try:
+                    mok.install(import_py(server, info, PluginName))
+                except Exception as error:
+                    server.logger.debug(error)
+                if os.path.exists(tmp + name):
+                    os.remove(tmp + name)
+                return True
+            else:  
+                if config['language'] != 'zh-cn':
+                    download(line['raw_url_cn'], server, info)
+                else:
+                    download(line['raw_url'], server, info)
+                if line['lib']:
+                    for line2 in js_jx['api_list']:
+                        if line2['name'] in line['lib']:
+                            if not os.path.exists(os.path.join('.',line2['file'])):
+                                server.tell(info.player, '§6' + lang['installlib'] + ': ' + line2['name'])
+                                download(line2['raw_url'], server, info)
+                                if line2['name'] == 'MinecraftItemAPI.json':
+                                    shutil.copyfile(
+                                        ppath + 'MinecraftItemAPI.json', 
+                                        cconfig + 'MinecraftItemAPI.json'
+                                        )
+                if line['pip_lib']:
+                    inst_pip = ' '.join(line['pip_lib'])
+                    server.tell(info.player, '§6' + lang['installpylib'] + ': ' + inst_pip) 
+                    pipcode = os.system(config['pip'] + ' install ' + inst_pip)
+                    if pipcode == 0:
+                        server.tell(info.player, '§6' + lang['pipinstallyes'])
+                    else:
+                        server.tell(info.player, '§6' + lang['pipinstallerror'])
+                return True
     return False
 
 
@@ -626,6 +678,112 @@ def list_print(server, info):
         get_text(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(js_jx['time'])), color=RColor.green)
         ))
 
+def list_fl_print(server, info):
+    global lang
+    js = open_file(listpath)
+    js_jx = json.loads(js)
+    server.tell(info.player, '§7------------§bMCDR ' + PluginName + '§7------------')
+    clss = []
+    for line in js_jx['list']:
+        if config['language'] != 'zh-cn':
+            if not line['class'] in clss:
+                clss.append(line['class'])
+        else:
+            if line.get('class_cn','') == '':
+                if not line['class'] in clss:
+                    clss.append(line['class'])
+            else:
+                if not line['class_cn'] in clss:
+                    clss.append(line['class_cn'])
+    for line in clss:
+        h1 = get_text(line, line, f'{Prefix} class ' + line, RColor.green)
+        h2 = get_text('[')
+        h3 = get_text(']')
+        send_player(server, info, RTextList(h2,h1,h3))
+    send_player(server, info, RTextList(
+        get_text(lang['listupdatetime'] + ': ', color=RColor.gold), 
+        get_text(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(js_jx['time'])), color=RColor.green)
+        ))
+
+def class_list(server, info):
+    global lang
+    js = open_file(listpath)
+    js_jx = json.loads(js)
+    clss = []
+    args = info.content.split(' ')
+    for line in js_jx['list']:
+        if args[2] in [line['class'],line['class_cn']]:
+            if config['language'] != 'zh-cn':
+                if not line['subclass'] in clss:
+                    clss.append(line['subclass'])
+            else:
+                if line.get('subclass_cn','') == '':
+                    if not line['subclass'] in clss:
+                        clss.append(line['subclass'])
+                else:
+                    if not line['subclass_cn'] in clss:
+                        clss.append(line['subclass_cn'])
+    if clss[0] == '':
+        subclass_list_print(server, info, True)
+    else:
+        server.tell(info.player, '§7------------§bMCDR ' + PluginName + '§7------------')
+        for line in clss:
+            h1 = get_text(line, line, f'{Prefix} subclass ' + args[2] + ' ' + line, RColor.green)
+            h2 = get_text('[')
+            h3 = get_text(']')
+        send_player(server, info, RTextList(h2,h1,h3))
+    send_player(server, info, RTextList(
+        get_text(lang['listupdatetime'] + ': ', color=RColor.gold), 
+        get_text(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(js_jx['time'])), color=RColor.green)
+        ))
+
+def subclass_list_print(server, info, subclass_mode=False):
+    global lang
+    js = open_file(listpath)
+    js_jx = json.loads(js)
+    args = info.content.split(' ')
+    server.tell(info.player, '§7------------§bMCDR ' + PluginName + '§7------------')
+    for line in js_jx['list']:
+        if args[2] in [line['class'],line['class_cn']]:
+            if subclass_mode == False:
+                if args[3] in [line['subclass'],line['subclass_cn']]:
+                    if config['language'] == 'zh-cn':
+                        h1 = get_text(line['name'], line['remarks_cn'], f'{Prefix} getinfo ' + line['name'], RColor.green)
+                    else:
+                        h1 = get_text(line['name'], line['remarks'], f'{Prefix} getinfo ' + line['name'], RColor.green)
+                    h2 = get_text('   ')
+                    if os.path.exists(ppath + line['file']):
+                        h3 = get_text('[uninstall]', '卸载', Prefix +
+                                    ' rm ' + line['name'], RColor.red)
+                        h4 = get_text(' ')
+                        h5 = get_text('[update]', '更新', Prefix +
+                                    ' update ' + line['name'], RColor.red)
+                        h6 = RTextList(h3, h4, h5)
+                    else:
+                        h6 = get_text('[install]', '安装', Prefix +
+                                    ' install ' + line['name'], RColor.green)
+                    send_player(server, info, RTextList(h1, h2, h6))
+            else:
+                if config['language'] == 'zh-cn':
+                    h1 = get_text(line['name'], line['remarks_cn'], f'{Prefix} getinfo ' + line['name'], RColor.green)
+                else:
+                    h1 = get_text(line['name'], line['remarks'], f'{Prefix} getinfo ' + line['name'], RColor.green)
+                h2 = get_text('   ')
+                if os.path.exists(ppath + line['file']):
+                    h3 = get_text('[uninstall]', '卸载', Prefix +
+                                ' rm ' + line['name'], RColor.red)
+                    h4 = get_text(' ')
+                    h5 = get_text('[update]', '更新', Prefix +
+                                ' update ' + line['name'], RColor.red)
+                    h6 = RTextList(h3, h4, h5)
+                else:
+                    h6 = get_text('[install]', '安装', Prefix +
+                                ' install ' + line['name'], RColor.green)
+                send_player(server, info, RTextList(h1, h2, h6))
+    send_player(server, info, RTextList(
+        get_text(lang['listupdatetime'] + ': ', color=RColor.gold), 
+        get_text(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(js_jx['time'])), color=RColor.green)
+        ))
 
 def findlist_print(server, info, plugin):
     global lang
@@ -752,7 +910,7 @@ def init(server, info):
                     return
 
 
-def download(link, server, info, filename=None):
+def download(link, server, info, filename=None, file_path=None):
     server.reply(info, '[§b' + PluginName + '§r] 正在尝试连接')
     try:
         headers = {
@@ -768,14 +926,17 @@ def download(link, server, info, filename=None):
                 filename = re.findall(
                     r'filename=(.+)', file.headers['Content-Disposition'])
                 if filename:
-                    filename = unquote(filename[0])
+                    filename = urllib.parse.unquote(filename[0])
                     if filename.startswith(' '):
                         filename = filename[1:]
                 else:
                     filename = os.path.basename(link)
             else:
                 filename = os.path.basename(link)
-        file_path = os.path.join('plugins', filename)
+        if not file_path:
+            file_path = os.path.join('plugins', filename)
+        else:
+            file_path = os.path.join(file_path, filename)
         server.reply(info, f'[§b' + PluginName + '§r] 正在下载 §b{filename} §6({length}KB)')
         start_time = int(time.time())
         down_size = 0
@@ -804,5 +965,89 @@ def download(link, server, info, filename=None):
     os.rename(f'{file_path}.tmp', file_path)
     server.reply(info, f'[§b' + PluginName + '§r] §b{filename} 下载完成')
     if getsys() != 'windows':
-        os.system('chmod +x ' + ppath + filename)
+        os.system('chmod +x ' + file_path)
     return True
+
+
+class import_py:
+    def __init__(self, server, info, PluginName):
+        self.server = server
+        self.info = info
+        self.PluginName = PluginName
+    def download(self, link, filename=None, file_path=None) -> bool:
+        self.server.reply(self.info, '[§b' + self.PluginName + '§r] 正在尝试连接')
+        try:
+            headers = {
+                'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'
+            }
+            file = requests.get(link, stream=True, timeout=(10, 27), headers=headers)
+            try:
+                length = round(int(file.headers['Content-Length']) / 1024, 2)
+            except:
+                length = '∞'
+            if not filename:
+                if 'Content-Disposition' in file.headers:
+                    filename = re.findall(
+                        r'filename=(.+)', file.headers['Content-Disposition'])
+                    if filename:
+                        filename = urllib.parse.unquote(filename[0])
+                        if filename.startswith(' '):
+                            filename = filename[1:]
+                    else:
+                        filename = os.path.basename(link)
+                else:
+                    filename = os.path.basename(link)
+            if not file_path:
+                file_path = os.path.join('plugins', filename)
+            else:
+                file_path = os.path.join(file_path, filename)
+            self.server.reply(self.info, f'[§b' + self.PluginName + '§r] 正在下载 §b{filename} §6({length}KB)')
+            start_time = int(time.time())
+            down_size = 0
+            with open(f'{file_path}.tmp', 'wb') as fp:
+                for chunk in file.iter_content(chunk_size=chunk_size):
+                    now_time = int(time.time())
+                    fp.write(chunk)
+                    down_size += len(chunk)
+                    u_time = now_time - start_time
+                    # 若下载时间过长，间隔5秒报告一次
+                    if u_time >= 5:
+                        self.server.say(
+                            f'[§b' + self.PluginName + '§r Downloading §b{filename} §6{round(down_size / 1024, 2)}KB ({round(down_size / 1024 / u_time, 2)}KB/s)]')
+                        start_time = int(time.time())
+                        down_size = 0
+        except requests.exceptions.ConnectTimeout:
+            self.server.reply(self.info, '[§b' + self.PluginName + '§r] §c错误：连接超时')
+            return False
+        except requests.exceptions.ConnectionError:
+            self.server.reply(self.info, '[§b' + self.PluginName + '§r] §c错误：连接失败')
+            return False
+
+        if os.path.isfile(file_path):
+            self.server.reply(self.info, '[§b' + self.PluginName + '§r] §c警告：发现旧文件已存在，将会被覆盖')
+            os.remove(file_path)
+        os.rename(f'{file_path}.tmp', file_path)
+        self.server.reply(self.info, f'[§b' + self.PluginName + '§r] §b{filename} 下载完成')
+        if getsys() != 'windows':
+            os.system('chmod +x ' + file_path)
+        return True
+    def say(self, text):
+        self.server.say(text)
+    def reload(self, plugin):
+        self.server.load_plugin(plugin)
+
+
+# Api
+class Api:
+    def __init__(self):
+        pass
+
+    def api_get_plugin_list(self) -> list:
+        js = open_file(listpath)
+        js_jx = json.loads(js)
+        return js_jx['list']
+
+    def api_get_api_list(self) -> list:
+        js = open_file(listpath)
+        js_jx = json.loads(js)
+        return js_jx['api_list']
