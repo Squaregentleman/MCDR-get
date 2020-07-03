@@ -45,3 +45,5 @@ findplugin: Search plugin
 findnow: A total of {0} plugins were found
 pipinstallerror: PIP library installation failed, please see the console for details!
 pipinstallyes: PIP library installed successfully!
+listall: List all Plugin
+yuanurl: Original address
